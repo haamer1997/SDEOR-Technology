@@ -1,0 +1,341 @@
+**--------------------------------------------------------------------**
+** Disperssion_10nD.DAT: Validate MRST_Disperssion        		      **
+**--------------------------------------------------------------------**
+**--------------------------------------------------------------------**
+**                                                                    **
+** FILE:  Disperssion_10nD.DAT                          		      **
+**                                                                    **
+** MODEL: CART 10x5x68 GRID               MOLECULAR Disperssion       **
+**        3 COMPONENTS                 Synthetic 3-component fluid    **
+**                                                                    **
+**--------------------------------------------------------------------**
+**                                                                    **
+** The data in this file are based on MRST input data used to         **
+** validate Molecular disperssion in a nano-pore reservoirs           **
+** completed with two SD fractures and modeled explicitly by   		  **
+** a high-resolution.                                                 **
+**                                                                    **
+**--------------------------------------------------------------------**
+
+*RESULTS *SIMULATOR *GEM
+*FILENAMES *OUTPUT *RESTARTOUT *INDEX-OUT *MAINRESULTSOUT
+*TITLE1 'Dispersion_10nD'
+*CASEID 'CASE 1'
+*INUNIT *FIELD
+
+*WSRF   *GRID  10
+*WSRF   *WELL  1
+*WRST   0
+*WPRN   *ITER  *BRIEF
+*OUTPRN *GRID  *IMPL *PRES  *SO  *SG  *SW *DIFFUO 'C1' *DIFFUG 'C1'
+*OUTSRF *WELL  *PAVG
+*OUTSRF *GRID  *Z 'C1'
+
+*OUTSRF *GRID  *PRES *SO *SG *SW *RHOO *RHOG *SIG *VISO
+
+**---------------------------------------------------------------------------RESERVOIR DATA------
+*GRID  *CART  10  5  98
+*DI  *IVAR  
+			65.6167979003 65.6167979003 65.6167979003 65.6167979003 65.6167979003 65.6167979003
+			65.6167979003 65.6167979003 65.6167979003 65.6167979003		
+*DJ  *JVAR  
+			65.6167979003 65.6167979003 65.6167979003 65.6167979003 65.6167979003 
+*DK  *KVAR  
+			6.8161353226 5.4047426906 4.2856020558 3.3981978481 2.6945452388 2.1365954451
+			1.6941783090 1.3433708984 1.0652039169 0.8446359721 0.6697402384 0.5310595355
+			0.4210949470 0.3339003305 0.2647607897 0.2099377250 0.1664666752 0.1319970193
+			0.1046648711 0.0829922926 0.0658073770 0.0521808801 0.0413759729 0.0328083990
+			0.0328083990 0.0328083990 0.0437537574 0.0583506463 0.0778172694 0.1037782407
+			0.1384001691 0.1845724756 0.2461485343 0.3282672604 0.4377819862 0.5838324153
+			0.7786073887 1.0383621221 1.3847748074 1.8467557959 2.4628603519 3.2845063363
+			4.3802653548 5.8415854968 7.7904232626 10.3894216123 13.8554835597 18.4778741144
+			24.6423612945 24.6423612945 18.4778741144 13.8554835597 10.3894216123 7.7904232626
+			5.8415854968 4.3802653548 3.2845063363 2.4628603519 1.8467557959 1.3847748074
+			1.0383621221 0.7786073887 0.5838324153 0.4377819862 0.3282672604 0.2461485343
+			0.1845724756 0.1384001691 0.1037782407 0.0778172694 0.0583506463 0.0437537574
+			0.0328083990 0.0328083990 0.0328083990 0.0413759729 0.0521808801 0.0658073770
+			0.0829922926 0.1046648711 0.1319970193 0.1664666752 0.2099377250 0.2647607897
+			0.3339003305 0.4210949470 0.5310595355 0.6697402384 0.8446359721 1.0652039169
+			1.3433708984 1.6941783090 2.1365954451 2.6945452388 3.3981978481 4.2856020558
+			5.4047426906 6.8161353226 
+
+
+*KDIR *DOWN 
+*DEPTH  *TOP 1 1 1  6000.00
+*POR  *CON  0.07
+	*MOD 
+		1:10  1:5  25 = 0.33
+		1:10  1:5  74 = 0.33
+*PERMI *CON 0.0001  **
+    *MOD 
+		1:10  1:5  25 = 5000.0 **20D
+		1:10  1:5  74 = 5000.0 **20D
+*PERMJ *EQUALSI
+*PERMK *EQUALSI
+**--------------------------------------------------Oil_1 FLUID COMPONENT DATA
+** *MODEL *PR
+** *NC  3  3
+** *COMPNAME
+**    'C1'  	   'CO2'   		 'C10'   
+** *HCFLAG
+**     0      	   0      		 0     
+** *PCRIT
+** 	45.39  	   72.80  		 20.75
+** *VCRIT
+**     0.098  	   0.0941  		 0.6097
+** *TCRIT
+** 	190.56     304.12	     617.70
+** *AC
+**     0.0114     0.2239        0.4884
+** *MW
+** 	16.043 	   44.009        142.281
+** *TRES     175.0
+** *PHASEID  *OIL
+** *BIN
+**     0.045    
+**     0.1050    0.1150   
+** *DIFFC-GAS  0.0028 0.00187 0.00095
+** *DIFFC-OIL  1.1e-6 9.68e-7 3.84e-7
+** *RESISTIVITY 2.0
+** *TORNOPSDIFF     **TORNOPSDIFF     **TORNOPS2DIFF
+** *DERIVATIVEMETHOD *NUMERALL
+**--------------------------------------------------Barnett FLUID COMPONENT DATA
+*MODEL *PR
+*NC  3  3
+*COMPNAME
+   'C1'  'C2'   'C3'   
+*HCFLAG
+    0      0      0     
+*PCRIT
+  45.39  48.08  		41.96
+*VCRIT
+    0.098  	   0.145  		0.200
+*TCRIT
+	190.6      305.3        369.9  
+*AC
+    0.0114    0.0990        0.152
+*MW
+	16.043 	  30.070 		44.097 
+**VSHIFT -0.21701 0. 0. 
+*TRES     180.0
+*PHASEID  *GAS
+*BIN
+    0.005    
+    0.010    0.005   
+**DIFFC-GAS  0.0028 0.0025 0.0019
+**RESISTIVITY 2.0
+**TORNOPS2DIFF    **TORNOPSDIFF     **TORNOPS2DIFF
+*DERIVATIVEMETHOD *NUMERALL
+
+**--------------------------------------------------Simple_1 FLUID COMPONENT DATA
+***MODEL *PR
+***NC  3  3
+***COMPNAME
+**   'C1'  	   'C7'   		 'C10'   
+***HCFLAG
+**    0      	   0      		 0     
+***PCRIT
+**	45.39  	   27.00  		 20.75
+***VCRIT
+**    0.098  	   0.431  		 0.6097
+***TCRIT
+**	190.56     540.13	     617.70
+***AC
+**    0.0114     0.3490        0.4884
+***MW
+**	16.043 	   100.2        142.281
+***TRES     175.0
+***PHASEID  *OIL
+***BIN
+**    0.03   
+**    0.045    0  
+****DIFFC-GAS  0.0028 2.46e-5 1.61e-5
+****DIFFC-OIL  1.1e-6 3.84e-7 2.86e-7
+****RESISTIVITY 2.0
+****TORNOPSDIFF     **TORNOPSDIFF     **TORNOPS2DIFF
+***DERIVATIVEMETHOD *NUMERALL
+
+**--------------------------------------------------ROCK FLUID----------
+*ROCKFLUID
+*RPT
+*SGT
+		0		0			1
+		0.1		0.01		0.81
+		0.2		0.04		0.64
+		0.3		0.09		0.49
+		0.4		0.16		0.36
+		0.5		0.25		0.25
+		0.6		0.36		0.16
+		0.7		0.49		0.09
+		0.8		0.64		0.04
+		0.9		0.81		0.01
+		1		1			0          
+*SWT
+		0		0			1
+		0.1		0.01		0.81
+		0.2		0.04		0.64
+		0.3		0.09		0.49
+		0.4		0.16		0.36
+		0.5		0.25		0.25
+		0.6		0.36		0.16
+		0.7		0.49		0.09
+		0.8		0.64		0.04
+		0.9		0.81		0.01
+		1		1			0    
+**--------------------------------------------------INITIAL CONDITION---
+*INITIAL
+*USER_INPUT  
+*SW *CON    0.0
+*PRES *CON  5000
+*ZGLOBALC 'C1' CON       0.991
+*ZGLOBALC 'C2' CON      0.0088
+*ZGLOBALC 'C3' CON      0.0002
+**--------------------------------------------------NUMCERICAL DATA-----
+NUMERICAL                  
+DTMIN 1e-6                 
+DTMAX 5.0                 
+NORTH 80                 
+ITERMAX 200 
+**--------------------------------------------------WELL DATA-----------
+*RUN
+*DATE 2014 4 18
+    *DTMIN    0.10
+    *DTMAX  100.00
+    *DTWELL   8.9407e-05
+	*AIMSET *CON 3
+    *AIMWELL  *WELLNN
+	**            rad  	 geofac  wfrac  skin
+	GEOMETRY  *K  0.033  0.37  	 1.0    0.0  
+	*WELL  1 	'Producer_Bottom'
+	*WELL  2 	'Injector_Top'
+	*INJECTOR 'Injector_Top'
+			   *INCOMP   *SOLVENT     100.00 0 0
+			   *OPERATE  *MAX  *BHP   5000
+	*PRODUCER 'Producer_Bottom'
+			   *OPERATE  *MIN  *BHP   2500.0  CONT
+
+	PERF       GEO  1
+	** UBA              ff          Status  Connection  
+		5 3 74         1.0  OPEN    FLOW-TO  'SURFACE'
+	PERF       GEO  2
+	** UBA              ff          Status  Connection  
+		5 3 25         1.0  OPEN    FLOW-TO  'SURFACE'
+	
+
+*TIME 0.0007324219	
+*TIME 0.007324219
+*TIME 0.014648438
+*TIME 0.029296875
+*TIME 0.05859375
+*TIME 0.1171875
+*TIME 0.234375
+*TIME 0.46875
+*TIME 0.9375
+*TIME 1.875
+*TIME 3.75
+*TIME 7.5
+*TIME 15
+*TIME 30
+*TIME 60
+*TIME 90
+*TIME 120
+*TIME 150
+*TIME 180
+*TIME 210
+*TIME 240
+*TIME 270
+*TIME 300
+*TIME 330
+*TIME 360
+*TIME 390
+*TIME 420
+*TIME 450
+*TIME 480
+*TIME 510
+*TIME 540
+*TIME 570
+*TIME 600
+*TIME 630
+*TIME 660
+*TIME 690
+*TIME 720
+*TIME 750
+*TIME 780
+*TIME 810
+*TIME 840
+*TIME 870
+*TIME 900
+*TIME 930
+*TIME 960
+*TIME 990
+*TIME 1020
+*TIME 1050
+*TIME 1080
+*TIME 1110
+*TIME 1140
+*TIME 1170
+*TIME 1200
+*TIME 1230
+*TIME 1260
+*TIME 1290
+*TIME 1320
+*TIME 1350
+*TIME 1380
+*TIME 1410
+*TIME 1440
+*TIME 1470
+*TIME 1500
+*TIME 1530
+*TIME 1560
+*TIME 1590
+*TIME 1620
+*TIME 1650
+*TIME 1680
+*TIME 1710
+*TIME 1740
+*TIME 1770
+*TIME 1800
+*TIME 1830
+*TIME 1860
+*TIME 1890
+*TIME 1920
+*TIME 1950
+*TIME 1980
+*TIME 2010
+*TIME 2040
+*TIME 2070
+*TIME 2100
+*TIME 2130
+*TIME 2160
+*TIME 2190
+*TIME 2220
+*TIME 2250
+*TIME 2280
+*TIME 2310
+*TIME 2340
+*TIME 2370
+*TIME 2400
+*TIME 2430
+*TIME 2460
+*TIME 2490
+*TIME 2520
+*TIME 2550
+*TIME 2580
+*TIME 2610
+*TIME 2640
+*TIME 2670
+*TIME 2700
+*TIME 2730
+*TIME 2760
+*TIME 2790
+*TIME 2820
+*TIME 2850
+*TIME 2880
+*TIME 2910
+*TIME 2921.94
+
+
+stop
+
+
+
