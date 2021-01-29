@@ -1,5 +1,5 @@
 # SD-EOR
-MS Thesis Simulation Codes for SD-EOR Technology
+MS Thesis Simulation Codes for SD-EOR Technology by Hassan Amer
 
 The following provides a summary for each folder within this repository.
 
