@@ -3,6 +3,7 @@ MS Thesis Simulation Codes for SD-EOR Technology
 
 The following provides a summary for each folder within this repository.
 (1) 3D-pEDFM Validation for Conductive NFs: it contains validation cases for 3D-pEDFM code for multiple conductive fractures occurring at different lengths, orientations, and numbers.
+
 (2) CompositionalFns: it has two updated MATLAB files about compositional fluids used and simulation equations.
 (3) Diffusion Models for Primary System: it validates different diffusion models against matrix permeability and grid refinement. 
 (4) ECLIPSE Diffusion for SD-EOR: this folder contains simulation validation cases for ECLIPSE diffusion equation for SD-EOR under different grid refinement, injection rates and pressures, and matrix permeability.
