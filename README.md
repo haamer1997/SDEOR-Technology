@@ -15,7 +15,7 @@ The following provides a summary for each folder within this repository.
 
 (6) Maxwell-Stefan Diffusion Codes (OMO): it contains original Maxwell-Stefan computational codes compatible with MRST environment with a validation simulation case, originally written by Dr. Olufemi Olorode.
 
-(7) OMO Comments on SPEJ: this folder contains different simulation cases based on comments received from Dr. Olufemi about SPE J "A novel EOR technology in tight rocks).
+(7) OMO Comments on SPEJ: this folder contains different simulation cases based on comments received from Dr. Olufemi about SPE J "A novel EOR technology in tight rocks".
 
 (8) OMO Original SD-EOR Codes: this folder has the original codes for SD-EOR upon which different simulation cases are based.
 
