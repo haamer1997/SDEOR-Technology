@@ -22,9 +22,15 @@ function schedule = HnP_schedule(inj, soak, prod,runtime, W)
     cycle_count = floor(runtime/dt_cycle);
 
     schedule = struct();
-    schedule.control = [struct('W', W(1));...  % injection
-                        struct('W', W(2));     % soaking
-                        struct('W', W(3))];... % production
+    [W_inj, W_soak, W_prod] = deal(W);
+    
+    W_inj(2).status = false;
+    W_soak(1).status = false; W_soak(2).status = false;
+    W_prod(1).status = false;
+    
+    schedule.control = [struct('W', W_inj);...  % injection
+                        struct('W', W_soak);     % soaking
+                        struct('W', W_prod)];... % production
     dt = [];
     control_id = [];
     dt_inj = rampupTimesteps(inj(1), inj(2), inj(3));
