@@ -1,0 +1,39 @@
+function schedule = HnP_schedule(inj, soak, prod,runtime, W)
+%Make a schedule for HnP with user-specified durations for injection,
+%soaking, and production
+%
+% SYNOPSIS:
+%   schedule = simpleSchedule(timesteps);
+%   schedule = simpleSchedule(timesteps, 'W', W, 'src', src, 'bc', bc);
+%
+% PARAMETERS:
+%   
+%   inj     - array of [injection period(day) timestep size(day) rampup counts].
+%   soak    - array of [soaking period(day) timestep size(day) rampup counts].
+%   prod    - array of [production period(day) timestep size(day) rampup counts].
+%   W -  Wells to be used in the schedule. The wells will be active in
+%        all timesteps. W is a struct with the following order: injector,
+%        soaking, and producer.
+%
+% RETURNS:
+%   schedule - struct suitable for HnP 
+
+    dt_cycle= inj(1) + soak(1) + prod(1);
+    cycle_count = floor(runtime/dt_cycle);
+
+    schedule = struct();
+    schedule.control = [struct('W', W(1));...  % injection
+                        struct('W', W(2));     % soaking
+                        struct('W', W(3))];... % production
+    dt = [];
+    dt_inj = rampupTimesteps(inj(1), inj(2), inj(3));
+    dt_soak = rampupTimesteps(soak(1), soak(2), soak(3));
+    dt_prod = rampupTimesteps(prod(1), prod(2), prod(3));
+    for i = 1:cycle_count
+        dt = [dt;dt_inj;dt_soak;dt_prod];
+        control_id =  ;
+    end
+    schedule.step.val = dt;
+    schedule.step.control = control_id;
+end
+

@@ -3,7 +3,7 @@ clear;
 clc;
 close all;
 Globals;
-case2run ='ProdBot_InjTop';
+case2run ='ProdBot_InjTop';%'ProdBot_InjTop'; %'ProdBot';
 opt = struct('nkr',        2, ...
              'shouldPlot', 0 ); %change to 0 if running on HPC
  %% Load necessary modules, etc 
@@ -63,86 +63,70 @@ for ii = 1:length(fracloc) %this nested loop locate fracture z-layer index from 
         end
     end
 end
-[fracIndx_X,fracIndx_Y,fracIndx_Z] = meshgrid(1:G_matrix.cartDims(1), 1:G_matrix.cartDims(2), frac_z);
-fraccells = sub2ind(G_matrix.cartDims, reshape(fracIndx_X,numel(fracIndx_X),1),reshape(fracIndx_Y,...
-            numel(fracIndx_X),1), reshape(fracIndx_Z,numel(fracIndx_X),1));
+
+%Model SD fracture explicitly using a semicircle (only applied for an x*y*z
+%reservoir where x = 2y)
+fraccells=[];
+element_size = physdim ./ G_matrix.cartDims;
+left_end = physdim(1)/2;
+for i = 1:numel(frac_z)
+    for j = 1:G_matrix.cartDims(1)/2
+        temp = 0; jj =0 ;
+        Frac_I = j;
+        Frac_I_flip = G_matrix.cartDims(1)- j;
+        idx_start = left_end - j*element_size(1);
+        while temp <= sqrt(left_end^2-idx_start^2) %+element_size(2)
+            jj = jj +1;
+            temp = jj*element_size(2);
+        end
+        Frac_J = G_matrix.cartDims(2):-1:G_matrix.cartDims(2)-jj+2;
+        Frac_J_flip = G_matrix.cartDims(2):-1:jj+2;
+        Frac_K = frac_z(i);
+        [II,JJ,KK]=meshgrid(Frac_I,Frac_J,Frac_K);
+        [II_flip,JJ_flip,KK_flip]=meshgrid(Frac_I_flip,Frac_J,Frac_K);
+%         [II_flip,JJ_flip,KK_flip]=meshgrid(Frac_I_flip,Frac_J_flip,Frac_K);
+        FracCellIds = sub2ind(G_matrix.cartDims, II,JJ,KK);
+        FracCellIds_flip = sub2ind(G_matrix.cartDims, II_flip,JJ_flip,KK_flip);
+        fraccells=[fraccells; FracCellIds(:);FracCellIds_flip(:)];
+    end
+end
 G_matrix.rock.poro(fraccells) = 0.33;% 0.33*3/100;  %should be related to size of w_f wrt frac cell size
 G_matrix.rock.perm(fraccells) = 10*darcy; %5*darcy
+% 
+% if (opt.shouldPlot)
+%     figure,
+%     plotCellData(G_matrix,convertTo(G_matrix.rock.perm,milli*darcy));
+%     colorbar('horiz'); axis equal tight; view(40,30);
+% end
 
-if (opt.shouldPlot)
-    figure,
-    plotCellData(G_matrix,convertTo(G_matrix.rock.perm,milli*darcy));
-    colorbar('horiz'); axis equal tight; view(3);
-end
-%% Microfractures parallel to bedding planes
-rng(65); 
-tol4domain = tol*1e3;
-
-set1 = Field(DFN('dim',3,'n',400,'dir',100,'ddir',0,'minl',5,...
-           'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',-45,'ddip',0,...
-           'shape','s'),'Poly'); 
-set2 = Field(DFN('dim',3,'n',400,'dir',45,'ddir',-1e9,'minl',5,...
-            'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',45,'ddip',-1e9,...
-            'shape','s'),'Poly');  
-set3 = Field(DFN('dim',3,'n',224,'dir',-55,'ddir',-1e9,'minl',5,...
-            'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',135,'ddip',-1e9,...
-            'shape','s'),'Poly'); %'l','q',4
-
-set2 = [set2;set3];
-[set1_,nonPlanarSets1,fracArea1] = processStochFracs(set1);
-[set2_,nonPlanarSets2,fracArea2] = processStochFracs(set2); 
-fracArea = [fracArea1;fracArea2];
-frac_intensity = sum(fracArea)/prod(physdim,'all')
-fprintf('%d of %d set1 fracs were OK while %d of %d set2 fracs were OK \n',...
-    numel(set1_),numel(set1),numel(set2_),numel(set2));
-
-fprintf('Number of nonplanar sets in sets 1 and 2 are : %d and %d respectively\n',...
-    numel(nonPlanarSets1),numel(nonPlanarSets2));
-if (opt.shouldPlot)
-    figure;
-    Draw('ply',set1_);
-    Draw('ply',set2_);view(45,30)
-end 
-fracSet = [set1_ ;set2_]; 
-fracplanes = struct;
-range_cond = [10 500]*milli*darcy;
-range_non_cond = [0.1 100]*nano*darcy;
-for i=1:numel(fracSet)
-    fracplanes(i).points = fracSet{i}(1:end-1,:);
-    fracplanes(i).aperture =0.1*ft; 
-    fracplanes(i).poro=0.5;
-    if(mod(i,2)==false)%even conductive NF idx
-       fracplanes(i).perm=range_cond(1) + ((range_cond(2)-range_cond(1)) .* randn(1,1));
-    else%odd non-conductive NF idx
-       fracplanes(i).perm = range_non_cond(1) + ((range_non_cond(2)-range_non_cond(1)) .* randn(1,1));
-    end  
-end 
-if (opt.shouldPlot)
-    figure,
-    plotfracongrid(G_matrix,fracplanes,'label',false); % visualize to check before pre-process
-end
 G=G_matrix;
-%% Process fracture(s)
-[G,fracplanes]=EDFMshalegrid(G,fracplanes,...
-    'Tolerance',tol,'plotgrid',false,'fracturelist',1:numel(fracSet));
-%% Fracture-Matrix NNCs
-G=fracturematrixShaleNNC3D(G,tol);
-%% Fracture-Fracture NNCs
-[G,fracplanes]=fracturefractureShaleNNCs3D(G,fracplanes,tol);
-% CICR_v1
-%% OMO: Projection-based NNCs
-G = pMatFracNNCs3D(G,tol); 
-% Set up EDFM operators
-%TPFAoperators = setupShaleEDFMOpsTPFA(G, G.rock, tol); 
-% Set up pEDFM operators
-TPFAoperators = setupPEDFMOpsTPFA(G, G.rock, tol); 
+
+% if (opt.shouldPlot)
+%     figure
+%     %Plot matrix
+%     show = true([G.cells.num, 1]);
+%     show(fraccells(:)) = false;% Hide well cell
+%     plotCellData (G , convertTo(G.rock.perm,milli*darcy),show, ...
+%         'EdgeColor', 'k','facealpha',0.0);
+%     colorbar ('horiz'); view(40,30); axis equal tight;
+%     hold on;
+% 
+%     %Plot frac plane
+% %     G.rock.perm(well_ids)=2.0*darcy; %Highlight the well cell
+%     show = false([G.cells.num, 1]);
+%     show(fraccells(:)) = true;% Hide well cell
+%     plotCellData (G , convertTo(G.rock.perm,milli*darcy),show, ...
+%         'EdgeColor', 'k');
+% %     G.rock.perm(well_ids)=1.0*darcy;
+%     hold off;
+% end
 %% Define three-phase compressible flow model
 useNatural = true;
 % casename = 'bakken_light';
 % pwf = 1000*psia;
 % pinj = 1600*psia;
-casename = 'oil_1' %'bakken_light';
-pwf = 2500*psia;
+casename = 'oil_1'; %'bakken_light';
+pwf = 2500*psia; %2500*psia;
 pinj = 3000*psia;
 rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 
@@ -166,7 +150,7 @@ T_sc = 288.706;% 60 Farenheit
 flowfluid = initSimpleADIFluid('phases', 'WOG', 'n', [opt.nkr, opt.nkr, opt.nkr], 'rho', [1000, rhoO_S, rhoG_S]);    % flowfluid.KGangiFn = @(p) power((1-power(((Pc - alpha.*p)./Pmax),m)),3);
 gravity reset on
 
-arg = {G, [], flowfluid, fluid, 'water', true};
+arg = {G, G.rock, flowfluid, fluid, 'water', true};
 
 diagonal_backend = DiagonalAutoDiffBackend('modifyOperators', true);
 mex_backend = DiagonalAutoDiffBackend('modifyOperators', true, 'useMex', true);
@@ -183,11 +167,11 @@ modelSparseAD = constructor(arg{:}, 'AutoDiffBackend', sparse_backend);
 modelDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', diagonal_backend);
 modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
 
-modelSparseAD.operators = TPFAoperators;
-modelDiagonalAD.operators = TPFAoperators;
-modelMexDiagonalAD.operators = TPFAoperators;
+% modelSparseAD.operators = TPFAoperators;
+% modelDiagonalAD.operators = TPFAoperators;
+% modelMexDiagonalAD.operators = TPFAoperators;
 %% Set up initial state
-totTime = 8*year;
+totTime = 30*year;
 nSteps =15;
 ncomp = fluid.getNumberOfComponents();
 s0 = [0.23, 0.70, 0.07];   %s0 = [0.23, 0.77, 0.07];
@@ -226,12 +210,12 @@ case 'ProdBot'
     W(1).components = info.initial;
 case 'ProdBot_InjTop'
     % Producer
-    W = verticalWell(W, G.Matrix, G.Matrix.rock, 20, 10, frac_z(2), ...
+    W = verticalWell(W, G, G.rock, 20, 10, frac_z(2), ...
         'comp_i', [0.23, 0.76, 0.01],'Name', 'Prod_Bot', 'Val', pwf, 'sign', -1, 'Type', 'bhp','Radius', wellRadius); 
 %     W = verticalWell(W, G.Matrix, G.Matrix.rock, 20, 10, frac_z(1), ...
 %         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', pinj, 'sign', 1, 'Type', 'bhp','Radius', wellRadius); %control by injection pressure
     % Injector
-    W = verticalWell(W, G.Matrix, G.Matrix.rock, 20, 10, frac_z(1), ...
+    W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
     W(1).components = info.initial;
     W(2).components = info.injection;
@@ -246,15 +230,16 @@ plotWell(G,W);
 dt = rampupTimesteps(totTime, 20*day, nSteps); %20*day
 schedule = simpleSchedule(dt, 'W', W);  
 %% Simulate problem
-frac_intensity = sum(fracArea)/prod(physdim,'all')
+% frac_intensity = sum(fracArea)/prod(physdim,'all')
 % [ws, states, reports] = simulateScheduleAD(state, modelMexDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
-% [ws, states, reports] = simulateScheduleAD(state, modelDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
-[ws, states, reports] = simulateScheduleAD(state, modelMexDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
+[ws, states, reports] = simulateScheduleAD(state, modelDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
+% [ws, states, reports] = simulateScheduleAD(state, modelMexDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
 % [ws, states, reports] = simulateScheduleAD(state, modelDiagonalAD, schedule, 'Verbose', true); %direct solver
 
 %% plotting
 figure, 
-plotToolbar(G, states)
+pargs = {'EdgeColor','k'};
+plotToolbar(G, states,pargs{:})
 view(40,30);
 axis tight equal;
 plotWellSols(ws,cumsum(schedule.step.val))
@@ -279,6 +264,6 @@ QTr = trapz(tinDays,x);
 %% Save Output Variables (Used in HPC).
 if ~opt.shouldPlot
     fpath =  '/scratch/ahass16/';
-    fullFinalOut = [fpath, 'MixedCond_1024NF_EOR_65_pEDFM.mat']; 
-    save(fullFinalOut,'ws','RF','Np','G','schedule','frac_intensity');
+    fullFinalOut = [fpath, 'semicircle_30years.mat'];
+    save(fullFinalOut,'ws','RF','Np','G','schedule','-v7.3');
 end

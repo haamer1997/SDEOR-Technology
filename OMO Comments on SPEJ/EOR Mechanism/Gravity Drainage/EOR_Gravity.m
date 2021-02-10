@@ -3,7 +3,7 @@ clear;
 clc;
 close all;
 Globals;
-case2run ='ProdTop_InjBot';
+case2run ='ProdBot_InjTop';%'ProdBot_InjTop'; %'ProdBot';
 opt = struct('nkr',        2, ...
              'shouldPlot', 0 ); %change to 0 if running on HPC
  %% Load necessary modules, etc 
@@ -49,7 +49,7 @@ z = [facesZcoords_aboveTop, facesZcoords_belowTop(1:end-1),...
 
 G_matrix = tensorGrid(0:5:physdim(1), 0:5:physdim(2),z);
 G_matrix = computeGeometry(G_matrix);    
-G_matrix.rock=makeShaleRock(G_matrix,10*micro*darcy,0.09); %20*micro*darcy
+G_matrix.rock=makeShaleRock(G_matrix,10*micro*darcy,0.07); %20*micro*darcy
     
 frac_z=[];
 for ii = 1:length(fracloc) %this nested loop locate fracture z-layer index from fracture location.
@@ -78,8 +78,12 @@ end
 G=G_matrix;
 %% Define three-phase compressible flow model
 useNatural = true;
-casename = 'oil_1';
-pwf = 1000*psia; 
+% casename = 'bakken_light';
+% pwf = 1000*psia;
+% pinj = 1600*psia;
+casename = 'oil_1' %'bakken_light';
+pwf = 2500*psia; %2500*psia;
+pinj = 3000*psia;
 rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 
 % diffusion
@@ -98,9 +102,9 @@ EOSModel = EquationOfStateModel(G1cell, fluid, eosname);
 p_sc = 101325; %atmospheric pressure
 T_sc = 288.706;% 60 Farenheit
 [L, x, y, Z_L, Z_V, rhoO_S, rhoG_S] = standaloneFlash(p_sc, T_sc, info.initial, EOSModel);
-
+%     nkr = 1;
 flowfluid = initSimpleADIFluid('phases', 'WOG', 'n', [opt.nkr, opt.nkr, opt.nkr], 'rho', [1000, rhoO_S, rhoG_S]);    % flowfluid.KGangiFn = @(p) power((1-power(((Pc - alpha.*p)./Pmax),m)),3);
-gravity reset on %gravity reset on
+gravity reset on
 
 arg = {G, G.rock, flowfluid, fluid, 'water', true};
 
@@ -123,7 +127,7 @@ modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
 % modelDiagonalAD.operators = TPFAoperators;
 % modelMexDiagonalAD.operators = TPFAoperators;
 %% Set up initial state
-totTime = 8*year;
+totTime = 30*year;
 nSteps =15;
 ncomp = fluid.getNumberOfComponents();
 s0 = [0.23, 0.70, 0.07];   %s0 = [0.23, 0.77, 0.07];
@@ -148,11 +152,11 @@ case 'ProdTop'
     W(1).components = info.initial;
 case 'ProdTop_InjBot'
     % Producer
-    W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
-        'comp_i', [0.23, 0.76, 0.01],'Name', 'Prod_Bot', 'Val', pwf, 'sign', -1, 'Type', 'bhp','Radius', wellRadius);
+    W = verticalWell(W, G.Matrix, G.Matrix.rock, 2, 2, 10, ...
+        'comp_i', [0.23, 0.76, 0.01],'Name', 'Prod_Top', 'Val', pwf, 'sign', -1, 'Type', 'bhp','Radius', wellRadius);
     % Injector
-    W = verticalWell(W, G, G.rock, 20, 10, frac_z(2), ...
-        'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
+    W = verticalWell(W, G.Matrix, G.Matrix.rock, 1, 1, 70, ...
+        'comp_i', [0 0 1],'Name', 'Inj_Bot', 'Val', pinj, 'sign', 1, 'Type', 'bhp','Radius', wellRadius);
     W(1).components = info.initial;
     W(2).components = info.injection;
 case 'ProdBot' 
@@ -170,7 +174,7 @@ case 'ProdBot_InjTop'
     W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
     W(1).components = info.initial;
-    W(2).components = info.injection; 
+    W(2).components = info.injection;13.66 
 otherwise
     warning('Case Does Not Exist. Running case with Prod Only at Bottom')
     % Producer
@@ -190,7 +194,8 @@ schedule = simpleSchedule(dt, 'W', W);
 
 %% plotting
 figure, 
-plotToolbar(G, states)
+pargs = {'EdgeColor','k'};
+plotToolbar(G, states,pargs{:})
 view(40,30);
 axis tight equal;
 plotWellSols(ws,cumsum(schedule.step.val))
@@ -216,5 +221,5 @@ QTr = trapz(tinDays,x);
 if ~opt.shouldPlot
     fpath =  '/scratch/ahass16/';
     fullFinalOut = [fpath, 'EOR_Gravity.mat'];
-    save(fullFinalOut,'ws','RF','Np','states','G','schedule','frac_intensity');
+    save(fullFinalOut,'-v7.3');
 end

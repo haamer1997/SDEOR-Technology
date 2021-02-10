@@ -105,16 +105,16 @@ if (opt.shouldPlot)
 end 
 fracSet = [set1_ ;set2_]; 
 fracplanes = struct;
-range_cond = [10 500]*milli*darcy;
-range_non_cond = [0.1 100]*nano*darcy;
+range_cond = [1 10]*milli*darcy;
+range_non_cond = [1e-5 1e-4]*milli*darcy;
 for i=1:numel(fracSet)
     fracplanes(i).points = fracSet{i}(1:end-1,:);
-    fracplanes(i).aperture =0.1*ft; 
+    fracplanes(i).aperture = 100*nano*meter; %1*micro*meter;
     fracplanes(i).poro=0.5;
     if(mod(i,2)==false)%even conductive NF idx
-       fracplanes(i).perm=range_cond(1) + ((range_cond(2)-range_cond(1)) .* randn(1,1));
+       fracplanes(i).perm=range_cond(1) + ((range_cond(2)-range_cond(1)) .* rand(1,1));
     else%odd non-conductive NF idx
-       fracplanes(i).perm = range_non_cond(1) + ((range_non_cond(2)-range_non_cond(1)) .* randn(1,1));
+       fracplanes(i).perm = range_non_cond(1) + ((range_non_cond(2)-range_non_cond(1)) .* rand(1,1));
     end  
 end 
 if (opt.shouldPlot)
