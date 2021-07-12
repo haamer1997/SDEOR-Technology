@@ -30,3 +30,7 @@ The following provides a summary for each folder within this repository.
 (13) utils: it has auxiliary files required to run my simulation codes.
 
 (14) Validating CMG Diffusion Modeling in Primary Systems: this folder has simulation codes to validate MRST diffusion/dispersion modeling against CMG for a primary gas system.
+
+(15) Implementing NNC diffusion transfer function for 3D-pEDFM (This contributes to Asia URteC conference paper).
+
+

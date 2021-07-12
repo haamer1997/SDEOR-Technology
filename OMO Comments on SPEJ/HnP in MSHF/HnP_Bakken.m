@@ -29,11 +29,14 @@ wellLength=140;
 wellRadius=0.1000;
 heelCooord=[30, physdim(2)/2, physdim(3)/2];
 EndCoord=[heelCooord(1)+wellLength,physdim(2)/2, physdim(3)/2];
+
+heelCooord_inj=[30+1e-5, physdim(2)/2, physdim(3)/2];
+EndCoord_inj=[heelCooord(1)+wellLength,physdim(2)/2, physdim(3)/2];
 %% Create Fracture System
 [fracplanes,frac_centroid_s] = createMultiStageHFs('numStages',NumStages,'fracSpacing', fractureSpacing,...
       'numFracsPerStage', fracPerStage,'fracHalfLength', fracHalfLength,'fracHeight',fracHeight, ...
       'clusterSpacing', clusterSpacing,'heelCoord',[40, physdim(2)/2, physdim(3)/2]);
-  
+ 
 for i=1:numel(fracplanes)
      fracplanes(i).aperture = fracAperture; 
      fracplanes(i).poro = fracPoro;
@@ -41,23 +44,20 @@ for i=1:numel(fracplanes)
 end
 G_matrix = meshHFsystem(physdim,frac_centroid_s,'numStages',NumStages,'numFracsPerStage',fracPerStage,...
     'ny',21,'nz',17,'nxRefine_small',4,'nxRefine',10,'fracSpacing', fractureSpacing,'aperture',fracAperture);
-
-
 G_matrix = computeGeometry(G_matrix);
-
 G_matrix.rock=makeRock(G_matrix,MatrixPerm,MatrixPoro);
+
 if (opt.shouldPlot)
     plotfracongrid(G_matrix,fracplanes,'label',false); % visualize to check before pre-process
     view(40,30); 
 end
 %% Create Wells
 wells = struct;
+% wells(1).points=[heelCooord_inj; EndCoord_inj];
 wells(1).points=[heelCooord; EndCoord];
 wells(1).radius=wellRadius;
 wells(2).points=[heelCooord; EndCoord];
 wells(2).radius=wellRadius;
-wells(3).points=[heelCooord; EndCoord];
-wells(3).radius=wellRadius;
 %% EDFM PreProcessing
 G=G_matrix;
 [G,fracplanes]=EDFMshalegrid(G,fracplanes,...
@@ -78,11 +78,16 @@ TPFAoperators = setupShaleEDFMOpsTPFA(G, G.rock, tol);
 %% Define three-phase compressible flow model
 useNatural = true;
 casename = 'bakken_light';
-pwf = 1000*psia;
-rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
+pwf = 1500*psia;
+rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s || 5,000 scf/d = 0.0016385 m^3/s
+pinj = 4500*psia;
+
+% casename = 'oil_1';
+% pwf = 2500*psia;
+% rate = 0.0016385; %10,000 scf/day = 0.003277 m^3/s || 5,000 scf/d = 0.0016385 m^3/s
 
 [fluid, info] = getShaleCompFluidCase(casename);
-info.injection = [0 0 1 0 0 0 0]; %C1 injection
+% info.injection = [0 0 1 0 0 0 0]; %C1 injection
 eosname = 'prcorr';  %'srk','rk','prcorr'
 G1cell = cartGrid([1 1],[1 1]);
 G1cell = computeGeometry(G1cell);
@@ -105,7 +110,6 @@ if useNatural
 else
     constructor = @GenericOverallCompositionModel;
 end
-
 modelSparseAD = constructor(arg{:}, 'AutoDiffBackend', sparse_backend);
 modelDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', diagonal_backend);
 modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
@@ -121,31 +125,27 @@ state = initCompositionalState(G, info.pressure, info.temp, s0, info.initial, mo
 linsolve = selectLinearSolverAD(modelDiagonalAD,'useAMGCL',true,'useCPR',true);
 disp(linsolve)
 nls = NonLinearSolver('LinearSolver', linsolve);
-%% Schedule
+%% HnP Well Definition
 W = [];
-W = addWellEDFMshale(W, G, G.Matrix.rock, wells(2).XFracCellIDs, ...
-    'comp_i', [0.17, 0.74, 0.09],'Name', 'Injector', 'Val',...
-    rate, 'sign', 1, 'Type', 'rate','Radius', wells(2).radius,'Dir','x'); %injector
-
-W = addWellEDFMshale(W, G, G.Matrix.rock, wells(3).XFracCellIDs, ...
-    'comp_i', [0.17, 0.74, 0.09],'Name', 'Soak', 'Val',...
-    0, 'sign', 1, 'Type', 'rate','Radius', wells(3).radius,'Dir','x');    %Soaking
-
 W = addWellEDFMshale(W, G, G.Matrix.rock, wells(1).XFracCellIDs, ...
-    'comp_i', [0.17, 0.74, 0.09],'Name', 'Producer', 'Val',...
-    pwf, 'sign', -1, 'Type', 'bhp','Radius', wells(1).radius,'Dir','x'); %Producer
+    'comp_i', [0, 0, 1],'Name', 'Injector', 'Val',...
+    rate, 'sign', 1, 'Type', 'rate','Radius', wells(1).radius,'Dir','x'); %injector
 
-for wi=1:numel(wells)
-    W(wi).components = info.initial;
-end
+W = addWellEDFMshale(W, G, G.Matrix.rock, wells(2).XFracCellIDs, ...
+    'comp_i', [0.17, 0.74, 0.09],'Name', 'Producer', 'Val',...
+    pwf, 'sign', -1, 'Type', 'bhp','Radius', wells(2).radius,'Dir','x'); %Producer
+W(1).components = info.injection;
+W(2).components = info.initial;
 %% HnP Schedule
-time_inj = [25*day 5*day 15];
-time_soak = [5*day 1*day 10];
-time_prod = [70*day 10*day 5]; %SPE-0519-0037-JPT
-totTime = 300*day;%30*year;
+time_inj = [25*day 5*day 15]; %[25*day 5*day 15]
+time_soak = [5*day 1*day 5];
+time_prod = [70*day 15*day 5]; %SPE-0519-0037-JPT
+totTime = 8*year;%30*year;
 schedule = HnP_schedule(time_inj,time_soak,time_prod,totTime, W);
+tinSecs = cumsum(schedule.step.val);
+tinDays = tinSecs./86400;
 %% Simulate HnP schedule
-[ws, states, reports] = simulateScheduleAD(state, modelMexDiagonalAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
+[ws, states, reports] = simulateScheduleAD(state, modelSparseAD, schedule, 'nonlinearsolver', nls, 'Verbose', true);
 %% plotting
 if (opt.shouldPlot)
     figure, 
@@ -153,7 +153,7 @@ if (opt.shouldPlot)
     view(40,30);
     axis tight equal;
     plotWellSols(ws,cumsum(schedule.step.val))
-    plotWell(G,W); 
+%     plotWell(G,W); 
 end
 %% Calculate RF
 tinSecs = cumsum(schedule.step.val);

@@ -4,7 +4,7 @@ clc;
 close all;
 Globals;
 case2run ='ProdBot_InjTop';
-opt = struct('nkr',        2, ...
+opt = struct('nkr',        1, ...
              'shouldPlot', 0 ); %change to 0 if running on HPC
  %% Load necessary modules, etc 
 mrstModule add hfm;             % hybrid fracture module
@@ -121,7 +121,7 @@ modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
 % modelDiagonalAD.operators = TPFAoperators;
 % modelMexDiagonalAD.operators = TPFAoperators;
 %% Set up initial state
-totTime = 8*year;
+totTime = 12*year;
 nSteps =15;
 ncomp = fluid.getNumberOfComponents();
 s0 = [0.23, 0.70, 0.07];   %s0 = [0.23, 0.77, 0.07];
@@ -177,7 +177,7 @@ otherwise
     W(1).components = info.initial;
 end
 plotWell(G,W); 
-dt = rampupTimesteps(totTime, 20*day, nSteps); %20*day
+dt = rampupTimesteps(totTime, 30*day, nSteps); %20*day
 schedule = simpleSchedule(dt, 'W', W);  
 %% Simulate problem
 % frac_intensity = sum(fracArea)/prod(physdim,'all')

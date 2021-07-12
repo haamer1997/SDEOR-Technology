@@ -4,7 +4,7 @@ clc;
 close all;
 Globals;
 case2run ='ProdBot_InjTop';
-opt = struct('nkr',        2, ...
+opt = struct('nkr',        1, ...
              'shouldPlot', 0 ); %change to 0 if running on HPC
  %% Load necessary modules, etc 
 mrstModule add hfm;             % hybrid fracture module
@@ -104,7 +104,8 @@ T_sc = 288.706;% 60 Farenheit
 [L, x, y, Z_L, Z_V, rhoO_S, rhoG_S] = standaloneFlash(p_sc, T_sc, info.initial, EOSModel);
 
 flowfluid = initSimpleADIFluid('phases', 'WOG', 'n', [opt.nkr, opt.nkr, opt.nkr], 'rho', [1000, rhoO_S, rhoG_S]);    % flowfluid.KGangiFn = @(p) power((1-power(((Pc - alpha.*p)./Pmax),m)),3);
-gravity reset on %gravity reset on
+gravity reset on %enable gravity-drainage
+gravity reset off 
 
 arg = {G, G.rock, flowfluid, fluid, 'water', true};
 
@@ -127,7 +128,7 @@ modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
 % modelDiagonalAD.operators = TPFAoperators;
 % modelMexDiagonalAD.operators = TPFAoperators;
 %% Set up initial state
-totTime = 8*year;
+totTime = 12*year;
 nSteps =15;
 ncomp = fluid.getNumberOfComponents();
 s0 = [0.23, 0.70, 0.07];   %s0 = [0.23, 0.77, 0.07];
@@ -138,7 +139,7 @@ state = initCompositionalState(G, info.pressure, info.temp, s0, info.initial, mo
 % easy to write interfaces to other solvers using MEX files and/or the
 % LinearSolverAD class. We call the routine for automatically selecting a
 % reasonable linear solver for the specific model.
-linsolve = selectLinearSolverAD(modelDiagonalAD,'useAMGCL',false,'useCPR',false);
+linsolve = selectLinearSolverAD(modelDiagonalAD,'useAMGCL',true,'useCPR',true);
 disp(linsolve)
 nls = NonLinearSolver('LinearSolver', linsolve);
 %% Schedule
@@ -183,7 +184,7 @@ otherwise
     W(1).components = info.initial;
 end
 plotWell(G,W); 
-dt = rampupTimesteps(totTime, 20*day, nSteps); %20*day
+dt = rampupTimesteps(totTime, 30*day, nSteps); %20*day
 schedule = simpleSchedule(dt, 'W', W);  
 %% Simulate problem
 % frac_intensity = sum(fracArea)/prod(physdim,'all')

@@ -82,7 +82,7 @@ useNatural = true;
 % pwf = 1000*psia;
 % pinj = 1600*psia;
 casename = 'oil_1' %'bakken_light';
-pwf = 2500*psia; %2500*psia;
+pwf = 1000*psia; %2500*psia;
 pinj = 3000*psia;
 rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 
@@ -123,6 +123,7 @@ modelSparseAD = constructor(arg{:}, 'AutoDiffBackend', sparse_backend);
 modelDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', diagonal_backend);
 modelMexDiagonalAD = constructor(arg{:}, 'AutoDiffBackend', mex_backend);
 
+modelMexDiagonalAD.extraStateOutput = true;
 % modelSparseAD.operators = TPFAoperators;
 % modelDiagonalAD.operators = TPFAoperators;
 % modelMexDiagonalAD.operators = TPFAoperators;
@@ -133,6 +134,18 @@ ncomp = fluid.getNumberOfComponents();
 s0 = [0.23, 0.70, 0.07];   %s0 = [0.23, 0.77, 0.07];
 %                                 (G, p, T, s0, z0, eos)
 state = initCompositionalState(G, info.pressure, info.temp, s0, info.initial, modelSparseAD.EOSModel);
+
+% set1 = Field(DFN('dim',3,'n',400,'dir',100,'ddir',0,'minl',5,...
+%            'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',-45,'ddip',0,...
+%            'shape','s'),'Poly'); 
+% set2 = Field(DFN('dim',3,'n',400,'dir',45,'ddir',-1e9,'minl',5,...
+%             'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',45,'ddip',-1e9,...
+%             'shape','s'),'Poly');  
+% set3 = Field(DFN('dim',3,'n',224,'dir',-55,'ddir',-1e9,'minl',5,...
+%             'mu',10,'maxl',15,'bbx',[tol4domain,tol4domain,tol4domain,physdim(1)-tol4domain,physdim(2)-tol4domain,physdim(3)-tol4domain],'dip',135,'ddip',-1e9,...
+%             'shape','s'),'Poly'); %'l','q',4
+
+        
 %% Pick linear solver
 % The AMGCL library is one possible solver option for MRST. It is fairly
 % easy to write interfaces to other solvers using MEX files and/or the
@@ -174,7 +187,7 @@ case 'ProdBot_InjTop'
     W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
     W(1).components = info.initial;
-    W(2).components = info.injection;13.66 
+    W(2).components = info.injection;
 otherwise
     warning('Case Does Not Exist. Running case with Prod Only at Bottom')
     % Producer
@@ -184,6 +197,7 @@ otherwise
 end
 plotWell(G,W); 
 dt = rampupTimesteps(totTime, 20*day, nSteps); %20*day
+dt = dt(1);
 schedule = simpleSchedule(dt, 'W', W);  
 %% Simulate problem
 % frac_intensity = sum(fracArea)/prod(physdim,'all')
@@ -199,6 +213,10 @@ plotToolbar(G, states,pargs{:})
 view(40,30);
 axis tight equal;
 plotWellSols(ws,cumsum(schedule.step.val))
+%% Compute Component i Gas Mass Rate (Y_i) in surface conditions
+[moleComp_L,moleComp_V,mu_O,mu_G] = surfaceMoleComp(ws,EOSModel);
+
+% visc_oil = viscLBC_vect(c, MW, TinK, Pci, Tci, Vci, zi)
 %% Calculate RF
 tinSecs = cumsum(schedule.step.val);
 tinDays = tinSecs./86400;
@@ -220,6 +238,6 @@ QTr = trapz(tinDays,x);
 %% Save Output Variables (Used in HPC).
 if ~opt.shouldPlot
     fpath =  '/scratch/ahass16/';
-    fullFinalOut = [fpath, 'EOR_Gravity.mat'];
+    fullFinalOut = [fpath, 'EOR_Gravity_30years.mat'];
     save(fullFinalOut,'-v7.3');
 end

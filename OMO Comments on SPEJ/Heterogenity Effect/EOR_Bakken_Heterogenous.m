@@ -49,12 +49,18 @@ z = [facesZcoords_aboveTop, facesZcoords_belowTop(1:end-1),...
 
 G_matrix = tensorGrid(0:5:physdim(1), 0:5:physdim(2),z);
 G_matrix = computeGeometry(G_matrix);
-matrix_porosity = gaussianField(G_matrix.cartDims, [0.05 0.35], 3); %gaussianField(G_matrix.cartDims, [0.07 0.9], 3);
-matrix_perm = matrix_porosity.^3.*(1e-5)^2./(0.81*72*(1-matrix_porosity).^2)./2000;
+matrix_porosity = gaussianField(G_matrix.cartDims, [0.06 0.15], 3); %gaussianField(G_matrix.cartDims, [0.07 0.9], 3);
+perm_range = [1 20]*micro*darcy;
+matrix_perm = perm_range(1) + ((perm_range(2)-perm_range(1)) .* lognrnd(1,0.5,size(matrix_porosity))); %lognormal distribution
+% matrix_perm =
+% matrix_porosity.^3.*(1e-5)^2./(0.81*72*(1-matrix_porosity).^2)./100;
+% %Karman-Kozeny relationship
+min(matrix_perm(:))./(micro*darcy);
+max(matrix_perm(:))./(micro*darcy);
 G_matrix.rock=makeShaleRock(G_matrix,matrix_perm(:),matrix_porosity(:)); %20*micro*darcy
 figure,
 plotCellData(G_matrix,convertTo(G_matrix.rock.perm,micro*darcy));
-colorbar('horiz'); axis equal tight; view(3);
+colorbar('horiz'); axis equal tight; view(40,30);;
 % 
 % figure,
 % plotCellData(G_matrix,G_matrix.rock.poro);
@@ -97,6 +103,7 @@ rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 % G.rock.tau = 2;
 
 [fluid, info] = getShaleCompFluidCase(casename);
+% info.pressure = 1500*psia;
 eosname = 'prcorr';  %'srk','rk','prcorr'
 G1cell = cartGrid([1 1],[1 1]);
 G1cell = computeGeometry(G1cell);

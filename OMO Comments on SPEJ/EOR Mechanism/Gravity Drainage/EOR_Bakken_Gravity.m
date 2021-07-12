@@ -87,7 +87,7 @@ G=G_matrix;
 useNatural = true;
 casename = 'bakken_light';
 pwf = 1000*psia;
-pinj = 1600*psia;
+
 rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 
 % diffusion
@@ -97,7 +97,6 @@ rate = 0.003277; %10,000 scf/day = 0.003277 m^3/s
 % G.rock.tau = 2;
 
 [fluid, info] = getShaleCompFluidCase(casename);
-info.pressure = 1500 * psia;
 eosname = 'prcorr';  %'srk','rk','prcorr'
 G1cell = cartGrid([1 1],[1 1]);
 G1cell = computeGeometry(G1cell);
@@ -176,10 +175,8 @@ case 'ProdBot_InjTop'
 %     W = verticalWell(W, G.Matrix, G.Matrix.rock, 20, 10, frac_z(1), ...
 %         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', pinj, 'sign', 1, 'Type', 'bhp','Radius', wellRadius); %control by injection pressure
     % Injector
-%     W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
-%         'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
     W = verticalWell(W, G, G.rock, 20, 10, frac_z(1), ...
-        'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', pinj, 'sign', 1, 'Type', 'bhp','Radius', wellRadius); %control by injection rate
+        'comp_i', [0 0 1],'Name', 'Inj_Top', 'Val', rate, 'sign', 1, 'Type', 'rate','Radius', wellRadius); %control by injection rate
     W(1).components = info.initial;
     W(2).components = info.injection;
 otherwise
@@ -226,6 +223,6 @@ QTr = trapz(tinDays,x);
 %% Save Output Variables (Used in HPC).
 if ~opt.shouldPlot
     fpath =  '/scratch/ahass16/';
-    fullFinalOut = [fpath, 'EOR_Bakken_No_Gravity.mat'];
+    fullFinalOut = [fpath, 'EOR_Bakken_Gravity.mat'];
     save(fullFinalOut,'ws','RF','Np','G','schedule','-v7.3');
 end
