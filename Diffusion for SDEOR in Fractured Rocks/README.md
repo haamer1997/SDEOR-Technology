@@ -1,5 +1,6 @@
 #This file provides instructions to run the new diffusion NNC codes in HPC, or a machine with 'Shale' module installed.
-#Search for 'Hassan' inside each .m file to see changes.
+#Use the MATLAB codes inside 'Extra Files' Folder and do the following. 
+#You can search for 'Hassan' inside each .m file to see the changes.
 
 1- Add "MSdiffNatVars.m" file to Utils folder in Shale module for static implementation.
 
