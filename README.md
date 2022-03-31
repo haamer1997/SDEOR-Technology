@@ -1,6 +1,7 @@
 # SD-EOR
 MS Thesis Simulation Codes for SD-EOR Technology by Hassan Amer
-
+Thesis Title: Enhanced Oil Recovery in Tight Rocks Using the “Slot-Drill” Completion
+=====================================================================================
 The following provides a summary for each folder within this repository.
 
 (1) 3D-pEDFM Validation for Conductive NFs: it contains validation cases for 3D-pEDFM code for multiple conductive fractures occurring at different lengths, orientations, and numbers.
